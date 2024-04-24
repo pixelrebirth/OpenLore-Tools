@@ -106,12 +106,19 @@ class CharacterSheet {
         }
     }
 
-    [void] SetActionResult ([ActionCard]$ActionCard) {
+    [void] ApplyImpact ([ActionCard]$ActionCard) {
         $this.Suffering.Points = $this.Suffering.Condition + $this.Suffering.Points + $ActionCard.Impact #Condition for suffering resolves on impact
         $this.ResetCondition("Suffering")
 
         $this.ResolveSufferingToHinderances()
 
+        foreach ($Condition in $ActionCard.ConditionsArray){
+            $this.SetCondition($Condition.Stat, $Condition.Points)
+        }
+    }
+
+    [void] SetActionResult ([ActionCard]$ActionCard){
+        $this.ApplyImpact($ActionCard)
         foreach ($Condition in $ActionCard.ConditionsArray){
             $this.SetCondition($Condition.Stat, $Condition.Points)
         }
@@ -132,7 +139,7 @@ Capabilities:
     Mind: $($this.Mind.Points) [$($this.Mind.Condition)]
     Supernatural: $($this.Supernatural.Points) [$($this.Supernatural.Condition)]
 ---
-Essence: 
+Essence:
 Attributes:
     Intuition: $($this.Intuition.Points) [$($this.Intuition.Condition)]
     Perception: $($this.Perception.Points) [$($this.Perception.Condition)]
@@ -157,12 +164,32 @@ class ActionCard {
     [int] $Chance
     [int] $Impact
     [PSCustomObject[]] $ConditionsArray
+    [string] $TargetCapability
+    [int] $TargetCapabilityScore
+    [int] $TargetAspectScore
+    [int] $Threshold
 
     ActionCard ([int] $Chance, [int] $Impact, [PSCustomObject[]] $ConditionsArray){
+        $this.SetActor($Chance, $Impact, $ConditionsArray)
+    }
+
+    [void] SetActor ([int] $Chance, [int] $Impact, [PSCustomObject[]] $ConditionsArray){
         $this.Chance = $Chance
         $this.Impact = $Impact
         $this.ConditionsArray = $ConditionsArray
     }
+
+    [void] SetTarget ([string] $Capability, [int] $CapabilityScore, [int] $AspectScore){
+        $this.TargetCapability = $Capability
+        $this.TargetCapabilityScore = $CapabilityScore
+        $this.TargetAspectScore = $AspectScore
+    }
+
+    [void] SetThreshold ([int] $Capability, [int]$Aspect){
+        # Supply the targetted capability and aspect from the target entity inputs
+        $this.Threshold = $Aspect + $Capability
+    }
+
 }
 
 [ActionCard]::new(4, 3, @([PSCustomObject]@{Stat = "Body"; Points = -1}, [PSCustomObject]@{Stat = "Mind"; Points = -1}))
