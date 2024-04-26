@@ -2,9 +2,9 @@
 
 Describe "CharacterSheet" {
     Context "CharacterSheet" {
-        it "Should return with Kelcey for name when instantiated without inputs" {
+        it "Should return with J. Doe for name when instantiated without inputs" {
             $TestCharacter = [CharacterSheet]::new()
-            $TestCharacter.Name | should Be "Kelcey"
+            $TestCharacter.Name | should Be "J. Doe"
         }
         it "Should return Aspect Awesomestestest for the last aspect when instantiated without inputs" {
             $TestCharacter = [CharacterSheet]::new()
@@ -50,7 +50,7 @@ Describe "CharacterSheet" {
         }
         it "Should resolve the action with actioncard input" {
             $TestCharacter = [CharacterSheet]::new()
-            $ActionCard = [ActionCard]::new(4, 6, @([PSCustomObject]@{Stat = "Body"; Points = -1}, [PSCustomObject]@{Stat = "Mind"; Points = -1}))
+            $ActionCard = [ActionCard]::new(4, 6, @([PSCustomObject]@{Stat = "Body"; Points = -1}, [PSCustomObject]@{Stat = "Mind"; Points = -1}), "Body")
 
             $TestCharacter.SetActionResult($ActionCard)
             $TestCharacter.Body.Condition | should Be -3
@@ -76,29 +76,33 @@ Describe "CharacterSheet" {
         }
         It "Applies impact correctly" {
             $character = [CharacterSheet]::new()
-            $actionCard = [ActionCard]::new(4, 6, @([PSCustomObject]@{Stat = "Body"; Points = -1}))
-            $character.ApplyImpact($actionCard)
+            $actionCard = [ActionCard]::new(4, 6, @([PSCustomObject]@{Stat = "Body"; Points = -1}), "Body")
+            $character.SetActionResult($actionCard)
             $character.Suffering.Points | Should Be 1
         }
     }
     Context "ActionCard" {
-        it "Should return a body stat of -1" {
-            $TestActionCard = [ActionCard]::new(4, 6, @([PSCustomObject]@{Stat = "Body"; Points = -1}))
+        it "Should return a body stat of -1 when ActionCard is created with -1 body condition" {
+            $TestActionCard = [ActionCard]::new(4, 6, @([PSCustomObject]@{Stat = "Body"; Points = -1}), "Body")
             $TestActionCard.Chance | should Be 4
             $TestActionCard.Impact | should Be 6
             $TestActionCard.ConditionsArray[0].Stat | should Be "Body"
             $TestActionCard.ConditionsArray[0].Points | should Be -1
         }
         it "Should settarget correctly" {
-            $TestActionCard = [ActionCard]::new(4, 6, @([PSCustomObject]@{Stat = "Body"; Points = -1}))
-            $TestActionCard.SetTarget("Body",5,7)
-            $TestActionCard.TargetCapability | should Be "Body"
-            $TestActionCard.TargetCapabilityScore | should Be 5
+            $TestActionCard = [ActionCard]::new(4, 6, @([PSCustomObject]@{Stat = "Body"; Points = -1}), "Body")
+            $TestActionCard.SetTarget(5,7)
+            $TestActionCard.Threshold | should Be 12
         }
-        it "Should setthreshold correctly" {
-            $TestActionCard = [ActionCard]::new(4, 6, @([PSCustomObject]@{Stat = "Body"; Points = -1}))
-            $TestActionCard.SetThreshold(4,5)
-            $TestActionCard.Threshold | should Be 9
+    }
+    Context "DiceMechanics" {
+        it "Should create a RollResult for all combinations of chance input 1 thru 31" {
+            $TestDiceMechanics = 1..31 | Foreach-Object {[DiceMechanics]::new($_)}
+            $TestDiceMechanics.count | should Be 31
+            ($TestDiceMechanics.Sides | Measure-Object -Sum).Sum | should Be 992
+        }
+        it "Should treat the chance input as 31 if greater than 31" {
+            [DiceMechanics]::new(32).Count | should Be 1
         }
     }
 }

@@ -23,7 +23,7 @@ class CharacterSheet {
     [int] $Essence
 
     CharacterSheet (){
-        $this.Name = "Kelcey"
+        $this.Name = "J. Doe"
         $this.Pronouns = "any/all"
         $this.Appearance = "Perfectly average in every way."
         $this.Backstory = "A person who is a person."
@@ -156,40 +156,70 @@ Hinderances:
 "@
         return $true
     }
-
-
+    # Usage: [CharacterSheet]::new()
 }
 
 class ActionCard {
     [int] $Chance
     [int] $Impact
     [PSCustomObject[]] $ConditionsArray
-    [string] $TargetCapability
-    [int] $TargetCapabilityScore
-    [int] $TargetAspectScore
+    [string] $TargettedCapability
     [int] $Threshold
 
-    ActionCard ([int] $Chance, [int] $Impact, [PSCustomObject[]] $ConditionsArray){
-        $this.SetActor($Chance, $Impact, $ConditionsArray)
+    ActionCard (){}
+
+    ActionCard ([int] $Chance, [int] $Impact, [PSCustomObject[]] $ConditionsArray, $TargettedCapability){
+        $this.SetActor($Chance, $Impact, $ConditionsArray, $TargettedCapability)
     }
 
-    [void] SetActor ([int] $Chance, [int] $Impact, [PSCustomObject[]] $ConditionsArray){
+    [void] SetActor ([int] $Chance, [int] $Impact, [PSCustomObject[]] $ConditionsArray, $TargettedCapability){
         $this.Chance = $Chance
         $this.Impact = $Impact
         $this.ConditionsArray = $ConditionsArray
+        $this.TargettedCapability = $TargettedCapability
     }
 
-    [void] SetTarget ([string] $Capability, [int] $CapabilityScore, [int] $AspectScore){
-        $this.TargetCapability = $Capability
-        $this.TargetCapabilityScore = $CapabilityScore
-        $this.TargetAspectScore = $AspectScore
+    [void] SetTarget ([int] $CapabilityScore, [int] $AspectScore){
+        $this.Threshold = $AspectScore + $CapabilityScore
     }
-
-    [void] SetThreshold ([int] $Capability, [int]$Aspect){
-        # Supply the targetted capability and aspect from the target entity inputs
-        $this.Threshold = $Aspect + $Capability
-    }
-
+    # Usage: [ActionCard]::new(4, 3, @([PSCustomObject]@{Stat = "Body"; Points = -1}, [PSCustomObject]@{Stat = "Mind"; Points = -1}), "Body")
 }
 
-[ActionCard]::new(4, 3, @([PSCustomObject]@{Stat = "Body"; Points = -1}, [PSCustomObject]@{Stat = "Mind"; Points = -1}))
+class DiceMechanics {
+    [int] $Sides
+    [array] $DiceSet
+    [array] $EachResult
+    [int] $RollResult
+    DiceMechanics ([int] $Chance){
+        if ($Chance -gt 31){$Chance = 31}
+        $this.Sides = $Chance * 2
+        $SideChoices = @(2,4,6,8,10,12,20)
+        $Total = 0
+        $this.DiceSet = @()
+        $this.EachResult = @()
+        while ($True){
+            1..100 | Foreach-Object {
+                $SideChoices | Get-Random | Foreach-Object {
+                    $CurrentSide = $_
+                    $TestTotal = $Total + $CurrentSide
+                    if ($TestTotal -le $this.Sides -AND $_ -notin $this.DiceSet){
+                        $this.DiceSet += $_
+                        $Total += $_
+                        continue
+                    }
+                }
+            }
+            if ($Total -eq $this.Sides){
+                $this.DiceSet | Foreach-Object {
+                    $this.EachResult += 1..$_ | Get-Random
+                }
+                $this.RollResult = ($this.EachResult | Measure-Object -Sum).Sum
+                break
+            }
+            else {
+                $this.DiceSet = @()
+                $Total = 0
+            }
+        }
+    }
+}
