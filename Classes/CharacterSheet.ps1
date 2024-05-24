@@ -52,8 +52,8 @@ class CharacterSheet {
         $this.AddAspect("Aspect Awesomestest", 2, 0)
         $this.AddAspect("Aspect Awesomestestest", 1, 0)
 
-        $this.AddHinderance("Gotta-Boo-Boo", "Resilience")
-        $this.AddHinderance("Ouchy", "ActionBonus")
+        # $this.AddHinderance("Gotta-Boo-Boo", "Resilience")
+        # $this.AddHinderance("Ouchy", "ActionBonus")
         $this.RefreshHinderanceCounts()
 
         $this.SetCondition("Body",-1)
@@ -79,9 +79,9 @@ class CharacterSheet {
     }
 
     [void] AddHinderance ([string]$Name, [string]$Type){
-        $Types = @("Resilience", "ActionBonus", "ChooseRandom")
-        if ($Type -in $Types){
-            if ($Type -eq "ChooseRandom"){$Type = $Types | Get-Random}
+        $Types = @("Resilience", "ActionBonus")
+        if ($Type -notin $Types){
+            $Type = $Types | Get-Random
             $this.Hinderances += [PSCustomObject]@{
                 Name = $Name
                 Type = $Type
@@ -131,23 +131,25 @@ Pronouns: $($this.Pronouns)
 Appearance: $($this.Appearance)
 Backstory: $($this.Backstory)
 ---
-Resilience: $($this.Resilience) [-$($this.HinderanceTypeResilienceCount)]
-ActionBonus: $($this.ActionBonus) [-$($this.HinderanceTypeActionBonusCount)]
+Suffering: $($this.Suffering.Points) [$($this.Suffering.Condition)]
+---
+Resilience: $($this.Resilience) [-$($this.HinderanceTypeResilienceCount) Hinderance]
+ActionBonus: $($this.ActionBonus) [-$($this.HinderanceTypeActionBonusCount) Hinderance]
 ---
 Capabilities:
-    Body: $($this.Body.Points) [$($this.Body.Condition)]
-    Mind: $($this.Mind.Points) [$($this.Mind.Condition)]
-    Supernatural: $($this.Supernatural.Points) [$($this.Supernatural.Condition)]
+    Body: $($this.Body.Points) [$($this.Body.Condition) Condition]
+    Mind: $($this.Mind.Points) [$($this.Mind.Condition) Condition]
+    Supernatural: $($this.Supernatural.Points) [$($this.Supernatural.Condition) Condition]
 ---
 Essence:
 Attributes:
-    Intuition: $($this.Intuition.Points) [$($this.Intuition.Condition)]
-    Perception: $($this.Perception.Points) [$($this.Perception.Condition)]
-    Communication: $($this.Communication.Points) [$($this.Communication.Condition)]
-    Heart: $($this.Heart.Points) [$($this.Heart.Condition)]
-    Willpower: $($this.Willpower.Points) [$($this.Willpower.Condition)]
-    Survival: $($this.Survival.Points) [$($this.Survival.Condition)]
-    Charisma: $($this.Charisma.Points) [$($this.Charisma.Condition)]
+    Intuition: $($this.Intuition.Points) [$($this.Intuition.Condition) Condition]
+    Perception: $($this.Perception.Points) [$($this.Perception.Condition) Condition]
+    Communication: $($this.Communication.Points) [$($this.Communication.Condition) Condition]
+    Heart: $($this.Heart.Points) [$($this.Heart.Condition) Condition]
+    Willpower: $($this.Willpower.Points) [$($this.Willpower.Condition) Condition]
+    Survival: $($this.Survival.Points) [$($this.Survival.Condition) Condition]
+    Charisma: $($this.Charisma.Points) [$($this.Charisma.Condition) Condition]
 ---
 Aspects:
  $($this.Aspects | ForEach-Object { "  $($_.Name) - $($_.Points) [$($_.Uses) uses]`n" })
@@ -179,11 +181,17 @@ class ActionCard {
         $this.TargettedCapability = $TargettedCapability
     }
 
-    [void] SetTarget ([int] $CapabilityScore, [int] $AspectScore){
+    [void] SetThreshold ([int] $CapabilityScore, [int] $AspectScore){
         $this.Threshold = $AspectScore + $CapabilityScore
     }
-    # Usage: [ActionCard]::new(4, 3, @([PSCustomObject]@{Stat = "Body"; Points = -1}, [PSCustomObject]@{Stat = "Mind"; Points = -1}), "Body")
+    [void] RollAction ([CharacterSheet]$TargetCharacterSheet){
+        $Dice = [DiceMechanics]::new($this.Chance)
+        if ($Dice.RollResult -ge $this.Threshold){
+            $TargetCharacterSheet.SetActionResult($this)
+        }
+    }
 }
+# Usage: [ActionCard]::new(4, 3, @([PSCustomObject]@{Stat = "Body"; Points = -1}, [PSCustomObject]@{Stat = "Mind"; Points = -1}), "Body")
 
 class DiceMechanics {
     [int] $Sides

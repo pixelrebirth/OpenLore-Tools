@@ -80,6 +80,7 @@ Describe "CharacterSheet" {
             $character.SetActionResult($actionCard)
             $character.Suffering.Points | Should Be 1
         }
+
     }
     Context "ActionCard" {
         it "Should return a body stat of -1 when ActionCard is created with -1 body condition" {
@@ -89,10 +90,19 @@ Describe "CharacterSheet" {
             $TestActionCard.ConditionsArray[0].Stat | should Be "Body"
             $TestActionCard.ConditionsArray[0].Points | should Be -1
         }
-        it "Should settarget correctly" {
+        it "Should SetThreshold correctly" {
             $TestActionCard = [ActionCard]::new(4, 6, @([PSCustomObject]@{Stat = "Body"; Points = -1}), "Body")
-            $TestActionCard.SetTarget(5,7)
+            $TestActionCard.SetThreshold(5,7)
             $TestActionCard.Threshold | should Be 12
+        }
+        it "Should RollAction correctly" {
+            $TargetCharacterSheet = [CharacterSheet]::new()
+            $TestActionCard = [ActionCard]::new(20, 2, @([PSCustomObject]@{Stat = "Body"; Points = -1}), "Body")
+            $TestActionCard.SetThreshold(1,1)
+            $TestActionCard.RollAction($TargetCharacterSheet)
+
+            $TargetCharacterSheet.SetActionResult($TestActionCard)
+            $TargetCharacterSheet.suffering.points | should Be 4
         }
     }
     Context "DiceMechanics" {
